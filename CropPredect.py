@@ -111,9 +111,9 @@ with tab2:
             env_data["rainfall"]
         ]]
 
-        if st.button("🔍 Predict Crop"):
-            prediction = model.predict(input_data)[0]
-            st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
+        #if st.button("🔍 Predict Crop"):
+        #    prediction = model.predict(input_data)[0]
+        #    st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
     else:
         st.warning("⚠️ Please visit 'Live Data' tab first to load environmental data.")
 
