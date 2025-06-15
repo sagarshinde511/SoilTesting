@@ -3,7 +3,7 @@ import pandas as pd
 import mysql.connector
 from sklearn.ensemble import RandomForestClassifier
 
-# DB Credentials
+# --------- Database Credentials ---------
 DB_CONFIG = {
     "host": "82.180.143.66",
     "user": "u263681140_students",
@@ -11,7 +11,7 @@ DB_CONFIG = {
     "database": "u263681140_students"
 }
 
-# Load dataset & train model
+# --------- Load CSV & Train ML Model ---------
 @st.cache_data
 def load_data():
     return pd.read_csv("Crop_recommendation.csv")
@@ -27,7 +27,7 @@ def train_model():
 
 model = train_model()
 
-# Get latest environmental data from MySQL
+# --------- Get Latest Soil & Env Data from MySQL ---------
 def get_latest_soil_data():
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
@@ -49,32 +49,62 @@ def get_latest_soil_data():
         st.error(f"Database Error: {e}")
         return None
 
-# ------------------- UI -------------------
-st.title("🌾 Crop Prediction from Database + User Input")
+# --------- Simple Login Logic ---------
+def check_login(username, password):
+    return username == "admin" and password == "rit"
 
-# Step 1: Get environmental data
-env_data = get_latest_soil_data()
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-if env_data:
-    st.success("✅ Environmental data loaded from database (latest row):")
-    st.write(env_data)
+if "logout" not in st.session_state:
+    st.session_state.logout = False
 
-    # Step 2: Take N, P, K from user
-    st.subheader("🔢 Enter Soil Nutrients")
-    n = st.slider("Nitrogen (N)", 0, 150, 50)
-    p = st.slider("Phosphorus (P)", 0, 150, 50)
-    k = st.slider("Potassium (K)", 0, 150, 50)
+# --------- Login Page ---------
+if not st.session_state.logged_in:
+    st.title("🔐 Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if check_login(username, password):
+            st.session_state.logged_in = True
+            st.experimental_rerun()
+        else:
+            st.error("❌ Invalid username or password.")
+    st.stop()
 
-    # Step 3: Predict
-    if st.button("🔍 Predict Best Crop"):
-        input_data = [[
-            n, p, k,
-            env_data["temperature"],
-            env_data["humidity"],
-            env_data["ph"],
-            env_data["rainfall"]
-        ]]
-        prediction = model.predict(input_data)[0]
-        st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
-else:
-    st.error("❌ Could not retrieve environmental data from the database.")
+# --------- Logout Button ---------
+st.sidebar.title("👤 User Panel")
+st.sidebar.success("Logged in as: admin")
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.logged_in = False
+    st.experimental_rerun()
+
+# --------- Crop Prediction Interface ---------
+st.title("🌾 Crop Recommendation System (DB + User Input)")
+
+tab1, = st.tabs(["Predict Crop"])
+
+with tab1:
+    env_data = get_latest_soil_data()
+
+    if env_data:
+        st.success("✅ Environmental data loaded from database:")
+        st.write(env_data)
+
+        st.subheader("🔢 Enter Soil Nutrients")
+        n = st.slider("Nitrogen (N)", 0, 150, 50)
+        p = st.slider("Phosphorus (P)", 0, 150, 50)
+        k = st.slider("Potassium (K)", 0, 150, 50)
+
+        if st.button("🔍 Predict Best Crop"):
+            input_data = [[
+                n, p, k,
+                env_data["temperature"],
+                env_data["humidity"],
+                env_data["ph"],
+                env_data["rainfall"]
+            ]]
+            prediction = model.predict(input_data)[0]
+            st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
+    else:
+        st.error("❌ No environmental data found in the database.")
