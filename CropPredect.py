@@ -107,6 +107,16 @@ with tab1:
 
 # ---------------- Tab 2: Prediction ----------------
 with tab2:
+
+    if env_data:
+        st.json(env_data)
+
+        st.subheader("🧪 Enter Soil Nutrients")
+        n = st.slider("Nitrogen (N)", 0, 150, 50)
+        p = st.slider("Phosphorus (P)", 0, 150, 50)
+        k = st.slider("Potassium (K)", 0, 150, 50)
+
+
     st.subheader("🔍 Crop Prediction Result")
     st.session_state.user_input = {
         "n": n, "p": p, "k": k,
