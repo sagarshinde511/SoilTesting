@@ -1,17 +1,9 @@
 import streamlit as st
 import pandas as pd
-import mysql.connector
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 
-# ---------------- Database Config ----------------
-DB_CONFIG = {
-    "host": "82.180.143.66",
-    "user": "u263681140_students",
-    "password": "testStudents@123",
-    "database": "u263681140_students"
-}
-
-# ---------------- Load & Train Model ----------------
+# ---------------- Load Dataset and Train Model ----------------
 @st.cache_data
 def load_data():
     return pd.read_csv("Crop_recommendation.csv")
@@ -27,35 +19,17 @@ def train_model():
 
 model = train_model()
 
-# ---------------- Fetch Latest DB Data ----------------
-def get_latest_soil_data():
-    try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM SoilData ORDER BY id DESC LIMIT 1")
-        row = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        if row:
-            return {
-                "ph": float(row["SoilPH"]),
-                "rainfall": float(row["SoilMoisture"]),
-                "temperature": float(row["EnvarmentTemp"]),
-                "humidity": float(row["EnvarmentHumi"])
-            }
-        else:
-            return None
-    except Exception as e:
-        st.error(f"Database Error: {e}")
-        return None
-
-# ---------------- Login System ----------------
+# ---------------- Authentication System ----------------
 def check_login(username, password):
     return username == "admin" and password == "rit"
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "logout_clicked" not in st.session_state:
+    st.session_state.logout_clicked = False
+
+# ---------------- Login Page ----------------
 if not st.session_state.logged_in:
     st.title("🔐 Login")
     username = st.text_input("Username")
@@ -65,7 +39,7 @@ if not st.session_state.logged_in:
             st.session_state.logged_in = True
             st.rerun()
         else:
-            st.error("Invalid username or password.")
+            st.error("❌ Invalid username or password.")
     st.stop()
 
 # ---------------- Logout Button ----------------
@@ -73,62 +47,26 @@ st.sidebar.title("👤 User Panel")
 st.sidebar.success("Logged in as: admin")
 if st.sidebar.button("🚪 Logout"):
     st.session_state.logged_in = False
+    st.session_state.logout_clicked = True
     st.rerun()
 
-# ---------------- Tabs ----------------
+# ---------------- Crop Prediction Interface ----------------
 st.title("🌾 Crop Recommendation System")
 
-tab1, tab2 = st.tabs(["Live Data", "Predict Crop"])
-
-# ---------------- Tab 1: Fetch & Input ----------------
+tab1, = st.tabs(["Crop Prediction"])
 
 with tab1:
-    st.subheader("🌱 Latest Environmental Data from MySQL")
-
-    env_data = get_latest_soil_data()
-
-    if env_data:
-        st.session_state.env_data = env_data
-        st.json(env_data)
-    else:
-        st.warning("⚠️ No environmental data found in the database.")
-
-# -------- Tab 2: Prediction --------
-with tab2:
-    st.subheader("🧪 Enter Soil Nutrients")
+    st.subheader("🔍 Input Soil and Weather Details")
+    
     n = st.slider("Nitrogen (N)", 0, 150, 50)
     p = st.slider("Phosphorus (P)", 0, 150, 50)
     k = st.slider("Potassium (K)", 0, 150, 50)
+    temperature = st.slider("Temperature (°C)", 0.0, 50.0, 25.0)
+    humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
+    ph = st.slider("pH", 0.0, 14.0, 6.5)
+    rainfall = st.slider("Rainfall (mm)", 0.0, 300.0, 100.0)
 
-    if "env_data" in st.session_state:
-        env_data = st.session_state.env_data
-
-        input_data = [[
-            n, p, k,
-            env_data["temperature"],
-            env_data["humidity"],
-            env_data["ph"],
-            env_data["rainfall"]
-        ]]
-
-        #if st.button("🔍 Predict Crop"):
-        #    prediction = model.predict(input_data)[0]
-        #    st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
-    else:
-        st.warning("⚠️ Please visit 'Live Data' tab first to load environmental data.")
-
-    if "user_input" in st.session_state:
-        input_data = st.session_state.user_input
-        st.write("📋 Using this data for prediction:", input_data)
-
-        input_list = [[
-            input_data["n"], input_data["p"], input_data["k"],
-            input_data["temperature"], input_data["humidity"],
-            input_data["ph"], input_data["rainfall"]
-        ]]
-
-        if st.button("Predict Crop"):
-            prediction = model.predict(input_list)[0]
-            st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
-    else:
-        st.warning("⚠️ Please fill inputs in 'Live Data' tab first.")
+    if st.button("Predict Best Crop"):
+        input_data = [[n, p, k, temperature, humidity, ph, rainfall]]
+        prediction = model.predict(input_data)[0]
+        st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
