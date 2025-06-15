@@ -1,9 +1,17 @@
 import streamlit as st
 import pandas as pd
+import mysql.connector
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 
-# ---------------- Load Dataset and Train Model ----------------
+# DB Credentials
+DB_CONFIG = {
+    "host": "82.180.143.66",
+    "user": "u263681140_students",
+    "password": "testStudents@123",
+    "database": "u263681140_students"
+}
+
+# Load dataset & train model
 @st.cache_data
 def load_data():
     return pd.read_csv("Crop_recommendation.csv")
@@ -19,54 +27,54 @@ def train_model():
 
 model = train_model()
 
-# ---------------- Authentication System ----------------
-def check_login(username, password):
-    return username == "admin" and password == "rit"
-
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-if "logout_clicked" not in st.session_state:
-    st.session_state.logout_clicked = False
-
-# ---------------- Login Page ----------------
-if not st.session_state.logged_in:
-    st.title("🔐 Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if check_login(username, password):
-            st.session_state.logged_in = True
-            st.rerun()
+# Get latest environmental data from MySQL
+def get_latest_soil_data():
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM SoilData ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if row:
+            return {
+                "ph": float(row["SoilPH"]),
+                "rainfall": float(row["SoilMoisture"]),
+                "temperature": float(row["EnvarmentTemp"]),
+                "humidity": float(row["EnvarmentHumi"])
+            }
         else:
-            st.error("❌ Invalid username or password.")
-    st.stop()
+            return None
+    except Exception as e:
+        st.error(f"Database Error: {e}")
+        return None
 
-# ---------------- Logout Button ----------------
-st.sidebar.title("👤 User Panel")
-st.sidebar.success("Logged in as: admin")
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.logged_in = False
-    st.session_state.logout_clicked = True
-    st.rerun()
+# ------------------- UI -------------------
+st.title("🌾 Crop Prediction from Database + User Input")
 
-# ---------------- Crop Prediction Interface ----------------
-st.title("🌾 Crop Recommendation System")
+# Step 1: Get environmental data
+env_data = get_latest_soil_data()
 
-tab1, = st.tabs(["Crop Prediction"])
+if env_data:
+    st.success("✅ Environmental data loaded from database (latest row):")
+    st.write(env_data)
 
-with tab1:
-    st.subheader("🔍 Input Soil and Weather Details")
-    
+    # Step 2: Take N, P, K from user
+    st.subheader("🔢 Enter Soil Nutrients")
     n = st.slider("Nitrogen (N)", 0, 150, 50)
     p = st.slider("Phosphorus (P)", 0, 150, 50)
     k = st.slider("Potassium (K)", 0, 150, 50)
-    temperature = st.slider("Temperature (°C)", 0.0, 50.0, 25.0)
-    humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
-    ph = st.slider("pH", 0.0, 14.0, 6.5)
-    rainfall = st.slider("Rainfall (mm)", 0.0, 300.0, 100.0)
 
-    if st.button("Predict Best Crop"):
-        input_data = [[n, p, k, temperature, humidity, ph, rainfall]]
+    # Step 3: Predict
+    if st.button("🔍 Predict Best Crop"):
+        input_data = [[
+            n, p, k,
+            env_data["temperature"],
+            env_data["humidity"],
+            env_data["ph"],
+            env_data["rainfall"]
+        ]]
         prediction = model.predict(input_data)[0]
         st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
+else:
+    st.error("❌ Could not retrieve environmental data from the database.")
