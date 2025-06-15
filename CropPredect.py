@@ -101,13 +101,27 @@ with tab1:
             "ph": env_data["ph"],
             "rainfall": env_data["rainfall"]
         }
-        st.success("✅ Values stored. Now go to 'Predict Crop' tab.")
+        st.success("✅ Values stored. Now go to 'Predict Crop tab and  Enter Soil Nutrients'.")
     else:
         st.error("❌ No data found in the database.")
 
 # ---------------- Tab 2: Prediction ----------------
 with tab2:
     st.subheader("🔍 Crop Prediction Result")
+
+    st.subheader("🧪 Enter Soil Nutrients")
+    n = st.slider("Nitrogen (N)", 0, 150, 50)
+    p = st.slider("Phosphorus (P)", 0, 150, 50)
+    k = st.slider("Potassium (K)", 0, 150, 50)
+
+        # Save in session_state
+    st.session_state.user_input = {
+        "n": n, "p": p, "k": k,
+        "temperature": env_data["temperature"],
+        "humidity": env_data["humidity"],
+        "ph": env_data["ph"],
+         "rainfall": env_data["rainfall"]
+    }
 
     if "user_input" in st.session_state:
         input_data = st.session_state.user_input
