@@ -114,8 +114,8 @@ with tab2:
         if st.button("🔍 Predict Crop"):
             prediction = model.predict(input_data)[0]
             st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
-    else:
-        st.warning("⚠️ Please visit 'Live Data' tab first to load environmental data.")
+    #else:
+     #   st.warning("⚠️ Please visit 'Live Data' tab first to load environmental data.")
 
     if "user_input" in st.session_state:
         input_data = st.session_state.user_input
