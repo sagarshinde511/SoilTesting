@@ -135,10 +135,9 @@ with tab2:
 
 with tab3:
     st.subheader("🧪 Enter Current NPK Levels")
-    fn = st.slider("Nitrogen (N)", 0, 150, 50)
-    fp = st.slider("Phosphorus (P)", 0, 150, 50)
-    fk = st.slider("Potassium (K)", 0, 150, 50)
-
+    fn = st.slider("Nitrogen (N)", 0, 150, 50, key="fert_n")
+    fp = st.slider("Phosphorus (P)", 0, 150, 50, key="fert_p")
+    fk = st.slider("Potassium (K)", 0, 150, 50, key="fert_k")
     # Ideal NPK ranges (sample based on general crop average)
     IDEAL = {
         "N": 90,
