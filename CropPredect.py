@@ -175,3 +175,4 @@ with tab4:
             st.info("No data found in the SoilData table.")
     except Exception as e:
         st.error(f"Error fetching data: {e}")
+
