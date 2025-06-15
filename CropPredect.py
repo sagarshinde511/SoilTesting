@@ -81,50 +81,41 @@ st.title("🌾 Crop Recommendation System")
 tab1, tab2 = st.tabs(["Live Data", "Predict Crop"])
 
 # ---------------- Tab 1: Fetch & Input ----------------
+
 with tab1:
-    st.subheader("🌱 Latest Environmental Data from DB")
+    st.subheader("🌱 Latest Environmental Data from MySQL")
+
     env_data = get_latest_soil_data()
 
     if env_data:
+        st.session_state.env_data = env_data
         st.json(env_data)
-
-        st.subheader("🧪 Enter Soil Nutrients")
-        n = st.slider("Nitrogen (N)", 0, 150, 50)
-        p = st.slider("Phosphorus (P)", 0, 150, 50)
-        k = st.slider("Potassium (K)", 0, 150, 50)
-
-        # Save in session_state
-        st.session_state.user_input = {
-            "n": n, "p": p, "k": k,
-            "temperature": env_data["temperature"],
-            "humidity": env_data["humidity"],
-            "ph": env_data["ph"],
-            "rainfall": env_data["rainfall"]
-        }
-        st.success("✅ Values stored. Now go to 'Predict Crop tab and  Enter Soil Nutrients'.")
     else:
-        st.error("❌ No data found in the database.")
+        st.warning("⚠️ No environmental data found in the database.")
 
-# ---------------- Tab 2: Prediction ----------------
+# -------- Tab 2: Prediction --------
 with tab2:
+    st.subheader("🧪 Enter Soil Nutrients")
+    n = st.slider("Nitrogen (N)", 0, 150, 50)
+    p = st.slider("Phosphorus (P)", 0, 150, 50)
+    k = st.slider("Potassium (K)", 0, 150, 50)
 
-    if env_data:
-        st.json(env_data)
+    if "env_data" in st.session_state:
+        env_data = st.session_state.env_data
 
-        st.subheader("🧪 Enter Soil Nutrients")
-        n = st.slider("Nitrogen (N)", 0, 150, 50)
-        p = st.slider("Phosphorus (P)", 0, 150, 50)
-        k = st.slider("Potassium (K)", 0, 150, 50)
+        input_data = [[
+            n, p, k,
+            env_data["temperature"],
+            env_data["humidity"],
+            env_data["ph"],
+            env_data["rainfall"]
+        ]]
 
-
-    st.subheader("🔍 Crop Prediction Result")
-    st.session_state.user_input = {
-        "n": n, "p": p, "k": k,
-        "temperature": env_data["temperature"],
-        "humidity": env_data["humidity"],
-        "ph": env_data["ph"],
-         "rainfall": env_data["rainfall"]
-    }
+        if st.button("🔍 Predict Crop"):
+            prediction = model.predict(input_data)[0]
+            st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
+    else:
+        st.warning("⚠️ Please visit 'Live Data' tab first to load environmental data.")
 
     if "user_input" in st.session_state:
         input_data = st.session_state.user_input
