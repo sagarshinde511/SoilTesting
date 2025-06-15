@@ -67,7 +67,7 @@ if not st.session_state.logged_in:
     if st.button("Login"):
         if check_login(username, password):
             st.session_state.logged_in = True
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Invalid username or password.")
     st.stop()
@@ -77,7 +77,7 @@ st.sidebar.title("👤 User Panel")
 st.sidebar.success("Logged in as: admin")
 if st.sidebar.button("🚪 Logout"):
     st.session_state.logged_in = False
-    st.experimental_rerun()
+    st.rerun()
 
 # --------- Crop Prediction Interface ---------
 st.title("🌾 Crop Recommendation System (DB + User Input)")
