@@ -51,7 +51,7 @@ def get_latest_soil_data():
 
 # ---------------- Login System ----------------
 def check_login(username, password):
-    return username == "admin" and password == "rit"
+    return username == "admin" and password == "adcet"
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
