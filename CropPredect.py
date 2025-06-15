@@ -78,7 +78,7 @@ if st.sidebar.button("🚪 Logout"):
 # ---------------- Tabs ----------------
 st.title("🌾 Crop Recommendation System")
 
-tab1, tab2 = st.tabs(["Live Data", "Predict Crop"])
+tab1, tab2, tab3 = st.tabs(["Live Data", "Predict Crop", "Fertilizer"])
 
 # ---------------- Tab 1: Fetch & Input ----------------
 
