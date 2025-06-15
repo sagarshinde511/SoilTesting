@@ -73,7 +73,7 @@ st.sidebar.title("👤 User Panel")
 st.sidebar.success("Logged in as: admin")
 if st.sidebar.button("🚪 Logout"):
     st.session_state.logged_in = False
-    st.experimental_rerun()
+    st.rerun()
 
 # ---------------- Tabs ----------------
 st.title("🌾 Crop Recommendation System")
