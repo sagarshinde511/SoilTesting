@@ -78,7 +78,7 @@ if st.sidebar.button("🚪 Logout"):
 # ---------------- Tabs ----------------
 st.title("🌾 Crop Recommendation System")
 
-tab1, tab2, tab3 = st.tabs(["Live Data", "Predict Crop", "Fertilizer"])
+tab1, tab2, tab3, tab4 = st.tabs(["Live Data", "Predict Crop", "Fertilizer" , "View All Data"])
 
 # ---------------- Tab 1: Fetch & Input ----------------
 
@@ -160,3 +160,18 @@ with tab3:
         st.write(fertilizer_advice(fn, IDEAL["N"], "Nitrogen"))
         st.write(fertilizer_advice(fp, IDEAL["P"], "Phosphorus"))
         st.write(fertilizer_advice(fk, IDEAL["K"], "Potassium"))
+
+with tab4:
+    st.subheader("📋 Complete Soil Sensor Data from MySQL")
+
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        df = pd.read_sql("SELECT * FROM SoilData ORDER BY id DESC", conn)
+        conn.close()
+
+        if not df.empty:
+            st.dataframe(df, use_container_width=True)
+        else:
+            st.info("No data found in the SoilData table.")
+    except Exception as e:
+        st.error(f"Error fetching data: {e}")
