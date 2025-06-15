@@ -1,83 +1,40 @@
 import streamlit as st
 import pandas as pd
-import mysql.connector
 from sklearn.ensemble import RandomForestClassifier
-import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
-# Database config
-DB_CONFIG = {
-    "host": "82.180.143.66",
-    "user": "u263681140_students",
-    "password": "testStudents@123",
-    "database": "u263681140_students"
-}
+# Load and cache the dataset
+@st.cache_data
+def load_data():
+    return pd.read_csv("Crop_recommendation.csv")
 
-def get_soil_data():
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM SoilData ORDER BY id DESC LIMIT 1")
-    result = cursor.fetchone()
-    conn.close()
-    return result
+# Load data
+data = load_data()
 
-# Dummy models (replace with trained models later)
-def predict_crop(n, p, k, temp, humidity, moisture, ph):
-    # Dummy logic (replace with real ML model)
-    if n > 100:
-        return "Wheat"
-    elif p > 50:
-        return "Rice"
-    else:
-        return "Maize"
+# Prepare features and target
+X = data.drop("label", axis=1)
+y = data["label"]
 
-def recommend_fertilizer(n, p, k):
-    # Dummy logic
-    if n < 50:
-        return "Urea"
-    elif p < 30:
-        return "DAP"
-    elif k < 40:
-        return "MOP"
-    else:
-        return "Balanced NPK"
+# Split and train
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model = RandomForestClassifier(n_estimators=100)
+model.fit(X_train, y_train)
 
 # Streamlit UI
-st.set_page_config(page_title="Crop & Fertilizer Prediction", layout="wide")
-st.title("🌾 ML Based Crop and Fertilizer Prediction System")
+st.title("🌾 Crop Recommendation System")
 
-tab1, tab2, tab3 = st.tabs(["🌱 Crop Prediction", "🌾 Fertilizer Suggestion", "📊 Data Analysis"])
+# Input from user
+n = st.slider("Nitrogen (N)", 0, 150, 50)
+p = st.slider("Phosphorus (P)", 0, 150, 50)
+k = st.slider("Potassium (K)", 0, 150, 50)
+temperature = st.slider("Temperature (°C)", 0.0, 50.0, 25.0)
+humidity = st.slider("Humidity (%)", 0.0, 100.0, 50.0)
+ph = st.slider("pH", 0.0, 14.0, 6.5)
+rainfall = st.slider("Rainfall (mm)", 0.0, 300.0, 100.0)
 
-with tab1:
-    st.header("Enter NPK Values")
-    n = st.number_input("Nitrogen (N)", min_value=0, max_value=500, value=50)
-    p = st.number_input("Phosphorus (P)", min_value=0, max_value=500, value=40)
-    k = st.number_input("Potassium (K)", min_value=0, max_value=500, value=30)
-
-    soil = get_soil_data()
-    if soil:
-        st.success("Fetched latest soil data from database")
-        st.write(soil)
-
-        crop = predict_crop(n, p, k,
-                            float(soil['EnvarmentTemp']),
-                            float(soil['EnvarmentHumi']),
-                            float(soil['SoilMoisture']),
-                            float(soil['SoilPH']))
-        st.subheader(f"✅ Recommended Crop: **{crop}**")
-    else:
-        st.error("No soil data found in database!")
-
-with tab2:
-    st.header("Fertilizer Suggestion Based on NPK")
-    fertilizer = recommend_fertilizer(n, p, k)
-    st.subheader(f"🌿 Recommended Fertilizer: **{fertilizer}**")
-
-with tab3:
-    st.header("Latest Soil Data")
-    data = get_soil_data()
-    if data:
-        df = pd.DataFrame([data])
-        st.dataframe(df)
-        st.bar_chart(df.drop("id", axis=1))
-    else:
-        st.warning("No soil data available.")
+# Predict crop
+if st.button("Predict Best Crop"):
+    input_data = [[n, p, k, temperature, humidity, ph, rainfall]]
+    prediction = model.predict(input_data)[0]
+    st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
