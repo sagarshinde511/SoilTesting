@@ -132,3 +132,32 @@ with tab2:
             st.success(f"✅ Recommended Crop: **{prediction.upper()}**")
     #else:
      #   st.warning("⚠️ Please fill inputs in 'Live Data' tab first.")
+
+with tab3:
+    st.subheader("🧪 Enter Current NPK Levels")
+    fn = st.slider("Nitrogen (N)", 0, 150, 50)
+    fp = st.slider("Phosphorus (P)", 0, 150, 50)
+    fk = st.slider("Potassium (K)", 0, 150, 50)
+
+    # Ideal NPK ranges (sample based on general crop average)
+    IDEAL = {
+        "N": 90,
+        "P": 40,
+        "K": 40
+    }
+
+    def fertilizer_advice(current, ideal, nutrient_name):
+        diff = current - ideal
+        if diff < -10:
+            return f"🔼 Add more **{nutrient_name}** (deficiency of {abs(diff)} units)"
+        elif diff > 10:
+            return f"🔽 Reduce **{nutrient_name}** (excess of {abs(diff)} units)"
+        else:
+            return f"✅ **{nutrient_name}** level is optimal"
+
+    if st.button("💡 Recommend Fertilizer Adjustment"):
+        st.info("Based on general ideal NPK levels (N:90, P:40, K:40):")
+
+        st.write(fertilizer_advice(fn, IDEAL["N"], "Nitrogen"))
+        st.write(fertilizer_advice(fp, IDEAL["P"], "Phosphorus"))
+        st.write(fertilizer_advice(fk, IDEAL["K"], "Potassium"))
